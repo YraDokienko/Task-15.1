@@ -1,7 +1,6 @@
-from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm
+from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm, AddPizzaToOrderForm
 from django.views.generic import ListView, FormView, UpdateView
-from django.shortcuts import render
-from .models import Pizza
+from .models import Pizza, InstancePizza, Order
 
 
 class PizzaHomeView(ListView):
@@ -48,4 +47,40 @@ class PizzaPriceUpdateView(FormView):
         for pizza in pizzas:
             pizza.price = pizza.price + value['value']
             pizza.save()
+        return super().form_valid(form)
+
+
+class AddPizzaToOrderView(FormView):
+    form_class = AddPizzaToOrderForm
+    success_url = '/'
+
+    def form_valid(self, form):
+        order = Order.objects.first()
+        if not order:
+            order = Order.objects.create()
+
+        pizza_id = form.cleaned_data.get('pizza_id')
+        instance_pizza = InstancePizza.objects.filter(pizza_template=pizza_id)
+
+        if instance_pizza:
+            print('ТАКАЯ ПИЦА ЕСТЬ')
+            instance_pizza = InstancePizza.objects.get(pizza_template=pizza_id)
+            count = form.cleaned_data.get('count')
+            instance_pizza.count += count
+            instance_pizza.save()
+
+        else:
+            count = form.cleaned_data.get('count')
+            pizza_id = form.cleaned_data.get('pizza_id')
+            pizza = Pizza.objects.get(id=pizza_id)
+            instance_pizza = InstancePizza.objects.create(
+                name=pizza.name,
+                size=pizza.size,
+                price=pizza.price,
+                count=count,
+                pizza_template=pizza
+            )
+
+            order.pizzas.add(instance_pizza)
+        order.save_full_price()
         return super().form_valid(form)
