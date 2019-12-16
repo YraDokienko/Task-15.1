@@ -17,7 +17,6 @@ class PizzaHomeView(ListView):
         context['data'] = Pizza.objects.all().count()
         context['list'] = Pizza.objects.values_list('name', flat=True)
         context['form'] = PizzaSortedForm
-        context['order'] = Order.objects.first()
         return context
 
 
@@ -98,7 +97,3 @@ class AddPizzaToOrderView(FormView):
 class PizzaCartView(TemplateView):
     template_name = 'cart.html'
 
-    def get_context_data(self, **kwargs):
-        context = super(PizzaCartView, self).get_context_data(**kwargs)
-        context['order'] = Order.objects.first()
-        return context
