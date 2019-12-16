@@ -16,6 +16,7 @@ class PizzaHomeView(ListView):
         context['data'] = Pizza.objects.all().count()
         context['list'] = Pizza.objects.values_list('name', flat=True)
         context['form'] = PizzaSortedForm
+        context['order'] = Order.objects.first()
         return context
 
 
