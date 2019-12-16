@@ -47,3 +47,24 @@ class Pizza(models.Model):
         verbose_name = 'Пиццу'
         verbose_name_plural = 'Пиццы'
         ordering = ['name']
+
+
+class InstancePizza(models.Model):
+    name = models.CharField('Название', max_length=40)
+    size = models.ForeignKey(Size, on_delete=models.CASCADE, verbose_name='Размер')
+    price = models.DecimalField('Цена', max_digits=7, decimal_places=2, default=0)
+    count = models.PositiveIntegerField('Количество', default=1)
+    pizza_template = models.ForeignKey(Pizza, on_delete=models.CASCADE)
+
+
+class Order(models.Model):
+    pizzas = models.ManyToManyField(InstancePizza, blank=True)
+    full_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, )
+
+    def save_full_price(self):
+        pizzas = self.pizzas.all()
+        full_price = 0
+        for pizza in pizzas:
+            full_price += pizza.price * pizza.count
+        self.full_price = full_price
+        self.save()
