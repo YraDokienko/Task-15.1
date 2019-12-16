@@ -1,5 +1,5 @@
 from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm, AddPizzaToOrderForm
-from django.views.generic import ListView, FormView, UpdateView
+from django.views.generic import ListView, FormView, UpdateView, TemplateView
 from .models import Pizza, InstancePizza, Order
 
 
@@ -84,3 +84,12 @@ class AddPizzaToOrderView(FormView):
             order.pizzas.add(instance_pizza)
         order.save_full_price()
         return super().form_valid(form)
+
+
+class PizzaCartView(TemplateView):
+    template_name = 'cart.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PizzaCartView, self).get_context_data(**kwargs)
+        context['order'] = Order.objects.first()
+        return context
