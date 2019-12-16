@@ -1,5 +1,6 @@
 from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm, AddPizzaToOrderForm
 from django.views.generic import ListView, FormView, UpdateView, TemplateView
+from django.http import HttpResponseRedirect
 from .models import Pizza, InstancePizza, Order
 
 
@@ -85,6 +86,13 @@ class AddPizzaToOrderView(FormView):
             order.pizzas.add(instance_pizza)
         order.save_full_price()
         return super().form_valid(form)
+
+    def del_instance(self, id):
+        order = Order.objects.first()
+        instance = InstancePizza.objects.get(id=id)
+        instance.delete()
+        order.save_full_price()
+        return HttpResponseRedirect("/cart")
 
 
 class PizzaCartView(TemplateView):
