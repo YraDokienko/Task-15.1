@@ -1,7 +1,7 @@
-from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm
-from django.views.generic import ListView, FormView, UpdateView
-from django.shortcuts import render
-from .models import Pizza
+from .forms import PizzaForm, PizzaPriceUpdateForm, PizzaSortedForm, AddPizzaToOrderForm
+from django.views.generic import ListView, FormView, UpdateView, TemplateView
+from django.http import HttpResponseRedirect
+from .models import Pizza, InstancePizza, Order
 
 
 class PizzaHomeView(ListView):
@@ -17,6 +17,7 @@ class PizzaHomeView(ListView):
         context['data'] = Pizza.objects.all().count()
         context['list'] = Pizza.objects.values_list('name', flat=True)
         context['form'] = PizzaSortedForm
+        context['order'] = Order.objects.first()
         return context
 
 
@@ -49,3 +50,55 @@ class PizzaPriceUpdateView(FormView):
             pizza.price = pizza.price + value['value']
             pizza.save()
         return super().form_valid(form)
+
+
+class AddPizzaToOrderView(FormView):
+    form_class = AddPizzaToOrderForm
+    success_url = '/'
+
+    def form_valid(self, form):
+        order = Order.objects.first()
+        if not order:
+            order = Order.objects.create()
+
+        pizza_id = form.cleaned_data.get('pizza_id')
+        instance_pizza = InstancePizza.objects.filter(pizza_template=pizza_id)
+
+        if instance_pizza:
+            print('ТАКАЯ ПИЦА ЕСТЬ')
+            instance_pizza = InstancePizza.objects.get(pizza_template=pizza_id)
+            count = form.cleaned_data.get('count')
+            instance_pizza.count += count
+            instance_pizza.save()
+
+        else:
+            count = form.cleaned_data.get('count')
+            pizza_id = form.cleaned_data.get('pizza_id')
+            pizza = Pizza.objects.get(id=pizza_id)
+            instance_pizza = InstancePizza.objects.create(
+                name=pizza.name,
+                size=pizza.size,
+                price=pizza.price,
+                count=count,
+                pizza_template=pizza
+            )
+
+            order.pizzas.add(instance_pizza)
+        order.save_full_price()
+        return super().form_valid(form)
+
+    def del_instance(self, id):
+        order = Order.objects.first()
+        instance = InstancePizza.objects.get(id=id)
+        instance.delete()
+        order.save_full_price()
+        return HttpResponseRedirect("/cart")
+
+
+class PizzaCartView(TemplateView):
+    template_name = 'cart.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PizzaCartView, self).get_context_data(**kwargs)
+        context['order'] = Order.objects.first()
+        return context

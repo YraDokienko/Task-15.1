@@ -24,3 +24,8 @@ class PizzaSortedForm(forms.Form):
         ['price', 'цена по возрастанию'],
         ['-price', 'цена по убыванию'],
     ])
+
+
+class AddPizzaToOrderForm(forms.Form):
+    count = forms.IntegerField()
+    pizza_id = forms.IntegerField()
