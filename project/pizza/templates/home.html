@@ -1,7 +1,7 @@
 {% extends "index.html"  %}
 {% block application %}
 <div class="row ">
-    {% for pizza in object_list%}
+    {% for pizza in pizzas %}
     <div class="col-lg-4 col-md-6 mb-4 ">
         <div class="card h-100 border border-secondary img-thumbnail">
             {% if pizza.image %}
